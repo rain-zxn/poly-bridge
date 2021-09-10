@@ -345,7 +345,7 @@ func hatNftTx(config *conf.Config) {
 	records := make([]interface{}, 0)
 	for k, v := range tokenHash {
 		buCs := make([]*BuC, 0)
-		err := db.Raw("select a.`to` as address,convert(sum(a.amount*10000/POW(10,14)),decimal(37,0)) as amount from dst_transfers a left join dst_transactions b on a.tx_hash=b.hash  where a.chain_id = ? and a.asset=? and b.time < 1628589600 group by a.`to`;", chainId, k).
+		err := db.Raw("select a.`to` as address,convert(sum(a.amount/POW(10,14)),decimal(37,0)) as amount from dst_transfers a left join dst_transactions b on a.tx_hash=b.hash  where a.chain_id = ? and a.asset=? and b.time < 1628589600 group by a.`to`;", chainId, k).
 			Find(&buCs).Error
 		if err != nil {
 			logs.Error("Find(&addressAndAmounts),Error", err)
