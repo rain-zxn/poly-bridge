@@ -292,10 +292,7 @@ func everyBodyNft(config *conf.Config) {
 		panic(fmt.Sprint("Find(&recordUsers).Error:", err))
 	}
 	recordUsers := make([]interface{}, 0)
-	for i, user := range users {
-		if i >= 5 {
-			break
-		}
+	for _, user := range users {
 		var tt int64
 		err = db.Raw("select b.time from src_transfers a left join src_transactions b on a.tx_hash = b.hash where a.`from`= ? and a.chain_id= ? order by b.time limit 1", user.Address, user.FirstChain).
 			First(&tt).Error
@@ -331,7 +328,7 @@ func hatNftTx(config *conf.Config) {
 	type RecordToken struct {
 		Token   string `xlsx:"A-TOKEN"`
 		Address string `xlsx:"B-Address"`
-		Amount  string `xlsx:"C-Amount"`
+		USD     string `xlsx:"C-Amount"`
 	}
 	chainId := 7
 	tokenHash := map[string]string{"c38072aa3f8e049de541223a9c9772132bb48634": "SHIB",
@@ -340,7 +337,7 @@ func hatNftTx(config *conf.Config) {
 	records := make([]interface{}, 0)
 	for k, v := range tokenHash {
 		buCs := make([]*BuC, 0)
-		err := db.Raw("select a.`to` as address, sum(a.amount) as amount from dst_transfers a left join dst_transactions b on a.tx_hash=b.hash  where a.chain_id = ? and a.asset=? and b.time < 1628589600 group by a.`to`;", chainId, k).
+		err := db.Raw("select a.`to` as address,convert(sum(a.amount*10000/POW(10,14)),decimal(37,0)) as amount from dst_transfers a left join dst_transactions b on a.tx_hash=b.hash  where a.chain_id = ? and a.asset=? and b.time < 1628589600 group by a.`to`;", chainId, k).
 			Find(&buCs).Error
 		if err != nil {
 			logs.Error("Find(&addressAndAmounts),Error", err)
@@ -357,9 +354,9 @@ func hatNftTx(config *conf.Config) {
 			record.Token = v
 			record.Address = buc.Address
 			price := decimal.New(token.TokenBasic.Price, -8)
-			amount_usd := decimal.NewFromBigInt(&buc.Amount.Int, -18).Mul(price)
+			amount_usd := decimal.NewFromBigInt(&buc.Amount.Int, -4).Mul(price)
 			if amount_usd.Cmp(decimal.NewFromInt(0)) == 1 {
-				record.Amount = amount_usd.StringFixed(4)
+				record.USD = amount_usd.StringFixed(4)
 				records = append(records, record)
 			}
 		}
