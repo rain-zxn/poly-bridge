@@ -306,6 +306,9 @@ func everyBodyNft(config *conf.Config) {
 			if err != nil {
 				logs.Error("First(&tt).Error", err)
 			}
+			if user == nil || user.TotalAmount == nil {
+				continue
+			}
 			recordUser := new(RecordUser)
 			recordUser.Firsttime = time.Unix(tt, 0).Format("2006-01-02")
 			recordUser.Address = basedef.Hash2Address(user.FirstChain, user.Address)
