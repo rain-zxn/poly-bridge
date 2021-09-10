@@ -286,7 +286,7 @@ func everyBodyNft(config *conf.Config) {
 	}
 	models.Init(chains)
 	users := make([]*User, 0)
-	err = db.Raw("select convert(sum(a.amount*10000/POW(10,b.precision)),decimal(37,0)) as total_amount,a.chain_id as first_chain,a.`from` as address from src_transfers a left join tokens b on a.chain_id =b.chain_id and a.asset=b.hash where a.`from`<> '' and  a.`from` is not null and chain_id <> 0 group by a.chain_id,a.`from`").
+	err = db.Raw("select convert(sum(a.amount*10000/POW(10,b.precision)),decimal(37,0)) as total_amount,a.chain_id as first_chain,a.`from` as address from src_transfers a left join tokens b on a.chain_id =b.chain_id and a.asset=b.hash where a.`from`<> '' and  a.`from` is not null and a.chain_id <> 0 group by a.chain_id,a.`from`").
 		Scan(&users).Error
 	if err != nil {
 		panic(fmt.Sprint("Find(&recordUsers).Error:", err))
