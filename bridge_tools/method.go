@@ -20,7 +20,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/beego/beego/v2/core/logs"
+	"github.com/devfans/cogroup"
 	"github.com/urfave/cli"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -30,11 +32,12 @@ import (
 	"poly-bridge/conf"
 	"poly-bridge/crosschaindao"
 	"poly-bridge/crosschainlisten"
+	"poly-bridge/models"
+	"poly-bridge/utils/decimal"
+	"reflect"
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/devfans/cogroup"
 )
 
 const (
@@ -55,6 +58,10 @@ func executeMethod(method string, ctx *cli.Context) {
 		fetchBlock(config)
 	case "bingfaSWTH":
 		bingfaSWTH(config)
+	case "hecojiaoyi":
+		hatNftTx(config)
+	case "everyBodyNft":
+		everyBodyNft(config)
 	default:
 		fmt.Printf("Available methods: \n %s", strings.Join([]string{FETCH_BLOCK}, "\n"))
 	}
@@ -245,5 +252,146 @@ func bingfaSWTH(config *conf.Config) {
 			panic(fmt.Sprintf("bingfaSWTH bingfaSWTH panic panicHeight:%v,flagerr is:%v", height, err))
 		}
 		fmt.Printf("bingfaSWTH ing.....nowHeight:%v /n", height)
+	}
+}
+func everyBodyNft(config *conf.Config) {
+	type User struct {
+		Address     string
+		FirstChain  uint64
+		Firsttime   string
+		TotalAmount *models.BigInt
+	}
+
+	type RecordUser struct {
+		Address     string `xlsx:"A-Address"`
+		FirstChain  string `xlsx:"B-FirstChain"`
+		Firsttime   string `xlsx:"C-Firsttime"`
+		TotalAmount string `xlsx:"D-TotalAmount"`
+	}
+
+	Logger := logger.Default
+	dbCfg := config.DBConfig
+	if dbCfg.Debug == true {
+		Logger = Logger.LogMode(logger.Info)
+	}
+	db, err := gorm.Open(mysql.Open(dbCfg.User+":"+dbCfg.Password+"@tcp("+dbCfg.URL+")/"+
+		dbCfg.Scheme+"?charset=utf8"), &gorm.Config{Logger: Logger})
+	if err != nil {
+		panic(fmt.Sprintf("database err", err))
+	}
+	chains := []*models.Chain{}
+	err = db.Find(&chains).Error
+	if err != nil {
+		panic(err)
+	}
+	models.Init(chains)
+	users := make([]*User, 0)
+	err = db.Raw("select convert(sum(a.amount*10000/POW(10,b.precision)),decimal(37,0)) as total_amount,a.chain_id as first_chain,a.`from` as address from src_transfers a left join tokens b on a.chain_id =b.chain_id and a.asset=b.hash group by a.chain_id,a.`from`").
+		Scan(&users).Error
+	if err != nil {
+		panic(fmt.Sprint("Find(&recordUsers).Error:", err))
+	}
+	recordUsers := make([]interface{}, 0)
+	for i, user := range users {
+		if i >= 5 {
+			break
+		}
+		var tt int64
+		err = db.Raw("select time from src_transfers where `from`= ? and chain_id= ? order by time limit 1", user.Address, user.FirstChain).
+			First(&tt).Error
+		if err != nil {
+			logs.Error("First(&tt).Error", err)
+		}
+		recordUser := new(RecordUser)
+		recordUser.Firsttime = time.Unix(tt, 0).Format("2006-01-02")
+		recordUser.Address = basedef.Hash2Address(user.FirstChain, user.Address)
+		recordUser.FirstChain = models.ChainId2Name(user.FirstChain)
+		recordUser.TotalAmount = decimal.NewFromBigInt(&user.TotalAmount.Int, -4).String()
+		recordUsers = append(recordUsers, recordUser)
+	}
+	RefactorWrite(recordUsers, "allUsers_nft.xlsx")
+}
+
+func hatNftTx(config *conf.Config) {
+	Logger := logger.Default
+	dbCfg := config.DBConfig
+	if dbCfg.Debug == true {
+		Logger = Logger.LogMode(logger.Info)
+	}
+	db, err := gorm.Open(mysql.Open(dbCfg.User+":"+dbCfg.Password+"@tcp("+dbCfg.URL+")/"+
+		dbCfg.Scheme+"?charset=utf8"), &gorm.Config{Logger: Logger})
+	if err != nil {
+		panic(fmt.Sprintf("database err", err))
+	}
+	type BuC struct {
+		Token   string
+		Address string
+		Amount  *models.BigInt
+	}
+	type RecordToken struct {
+		Token   string `xlsx:"A-TOKEN"`
+		Address string `xlsx:"B-Address"`
+		Amount  string `xlsx:"C-Amount"`
+	}
+	chainId := 7
+	tokenHash := map[string]string{"c38072aa3f8e049de541223a9c9772132bb48634": "SHIB",
+		"485cdbff08a4f91a16689e73893a11ae8b76af6d": "FEI",
+		"4f99d10e16972ff2fe315eee53a95fc5a5870ce3": "BNB"}
+	records := make([]interface{}, 0)
+	for k, v := range tokenHash {
+		buCs := make([]*BuC, 0)
+		err := db.Raw("select a.`to` as address, sum(a.amount) as amount from dst_transfers a left join dst_transactions b on a.tx_hash=b.hash  where a.chain_id = ? and a.asset=? and b.time < 1628589600 group by a.`to`;", chainId, k).
+			Find(&buCs).Error
+		if err != nil {
+			logs.Error("Find(&addressAndAmounts),Error", err)
+		}
+		token := new(models.Token)
+		err = db.Where("hash = ? and chain_id = ?", k, chainId).
+			Preload("TokenBasic").
+			First(token).Error
+		if err != nil {
+			logs.Error("First(token),Error", err)
+		}
+		for _, buc := range buCs {
+			record := new(RecordToken)
+			record.Token = v
+			record.Address = buc.Address
+			price := decimal.New(token.TokenBasic.Price, -8)
+			amount_usd := decimal.NewFromBigInt(&buc.Amount.Int, -18).Mul(price)
+			if amount_usd.Cmp(decimal.NewFromInt(0)) == 1 {
+				record.Amount = amount_usd.StringFixed(4)
+				records = append(records, record)
+			}
+		}
+	}
+	RefactorWrite(records, "heco_nft.xlsx")
+}
+func RefactorWrite(records []interface{}, path string) {
+	xlsx := excelize.NewFile()
+	index := xlsx.NewSheet("Sheet1")
+
+	for i, t := range records {
+		d := reflect.TypeOf(t).Elem()
+		for j := 0; j < d.NumField(); j++ {
+			// 设置表头
+			if i == 0 {
+				column := strings.Split(d.Field(j).Tag.Get("xlsx"), "-")[0]
+				name := strings.Split(d.Field(j).Tag.Get("xlsx"), "-")[1]
+				xlsx.SetCellValue("Sheet1", fmt.Sprintf("%s%d", column, i+1), name)
+			}
+			// 设置内容
+			column := strings.Split(d.Field(j).Tag.Get("xlsx"), "-")[0]
+			switch d.Field(j).Type.String() {
+			case "string":
+				xlsx.SetCellValue("Sheet1", fmt.Sprintf("%s%d", column, i+2), reflect.ValueOf(t).Elem().Field(j).String())
+			case "float32":
+				xlsx.SetCellValue("Sheet1", fmt.Sprintf("%s%d", column, i+2), reflect.ValueOf(t).Elem().Field(j).Float())
+			}
+		}
+	}
+	xlsx.SetActiveSheet(index)
+	err := xlsx.SaveAs(path)
+	if err != nil {
+		fmt.Println(err)
 	}
 }
