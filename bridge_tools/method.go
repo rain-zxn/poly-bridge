@@ -285,26 +285,34 @@ func everyBodyNft(config *conf.Config) {
 		panic(err)
 	}
 	models.Init(chains)
-	users := make([]*User, 0)
-	err = db.Raw("select convert(sum(a.amount*10000/POW(10,b.precision)),decimal(37,0)) as total_amount,a.chain_id as first_chain,a.`from` as address from src_transfers a left join tokens b on a.chain_id =b.chain_id and a.asset=b.hash where a.`from`<> '' and  a.`from` is not null and a.chain_id <> 0 group by a.chain_id,a.`from`").
-		Scan(&users).Error
-	if err != nil {
-		panic(fmt.Sprint("Find(&recordUsers).Error:", err))
-	}
 	recordUsers := make([]interface{}, 0)
-	for _, user := range users {
-		var tt int64
-		err = db.Raw("select b.time from src_transfers a left join src_transactions b on a.tx_hash = b.hash where a.`from`= ? and a.chain_id= ? order by b.time limit 1", user.Address, user.FirstChain).
-			First(&tt).Error
+	var counter int
+	err = db.Raw("select count(t.cou) from (select count(1) as cou from src_transfers a left join tokens b on a.chain_id =b.chain_id and a.asset=b.hash left join src_transactions c on a.tx_hash = c.hash where a.`from`<> '' and  a.`from` is not null and a.chain_id <> 0  and c.time <1628589600 group by a.chain_id,a.`from`) t").
+		Scan(&counter).Error
+	if err != nil {
+		panic(fmt.Sprint("Scan(&counter).Error:", err))
+	}
+	for i := 0; i < counter/100; i++ {
+		users := make([]*User, 0)
+		err = db.Raw("select convert(sum(a.amount*10000/POW(10,b.precision)),decimal(37,0)) as total_amount,a.chain_id as first_chain,a.`from` as address from src_transfers a left join tokens b on a.chain_id =b.chain_id and a.asset=b.hash left join src_transactions c on a.tx_hash = c.hash where a.`from`<> '' and  a.`from` is not null and a.chain_id <> 0  and c.time <1628589600 group by a.chain_id,a.`from` limit ? , ?", i*100, 100).
+			Scan(&users).Error
 		if err != nil {
-			logs.Error("First(&tt).Error", err)
+			panic(fmt.Sprint("Scan(&users).Error:", err))
 		}
-		recordUser := new(RecordUser)
-		recordUser.Firsttime = time.Unix(tt, 0).Format("2006-01-02")
-		recordUser.Address = basedef.Hash2Address(user.FirstChain, user.Address)
-		recordUser.FirstChain = models.ChainId2Name(user.FirstChain)
-		recordUser.TotalAmount = decimal.NewFromBigInt(&user.TotalAmount.Int, -4).String()
-		recordUsers = append(recordUsers, recordUser)
+		for _, user := range users {
+			var tt int64
+			err = db.Raw("select b.time from src_transfers a left join src_transactions b on a.tx_hash = b.hash where a.`from`= ? and a.chain_id= ? order by b.time limit 1", user.Address, user.FirstChain).
+				First(&tt).Error
+			if err != nil {
+				logs.Error("First(&tt).Error", err)
+			}
+			recordUser := new(RecordUser)
+			recordUser.Firsttime = time.Unix(tt, 0).Format("2006-01-02")
+			recordUser.Address = basedef.Hash2Address(user.FirstChain, user.Address)
+			recordUser.FirstChain = models.ChainId2Name(user.FirstChain)
+			recordUser.TotalAmount = decimal.NewFromBigInt(&user.TotalAmount.Int, -4).String()
+			recordUsers = append(recordUsers, recordUser)
+		}
 	}
 	RefactorWrite(recordUsers, "allUsers_nft.xlsx")
 }
@@ -328,7 +336,7 @@ func hatNftTx(config *conf.Config) {
 	type RecordToken struct {
 		Token   string `xlsx:"A-TOKEN"`
 		Address string `xlsx:"B-Address"`
-		USD     string `xlsx:"C-Amount"`
+		Amount  string `xlsx:"C-Amount"`
 	}
 	chainId := 7
 	tokenHash := map[string]string{"c38072aa3f8e049de541223a9c9772132bb48634": "SHIB",
@@ -356,7 +364,7 @@ func hatNftTx(config *conf.Config) {
 			price := decimal.New(token.TokenBasic.Price, -8)
 			amount_usd := decimal.NewFromBigInt(&buc.Amount.Int, -4).Mul(price)
 			if amount_usd.Cmp(decimal.NewFromInt(0)) == 1 {
-				record.USD = amount_usd.StringFixed(4)
+				record.Amount = decimal.NewFromBigInt(&buc.Amount.Int, -4).StringFixed(4)
 				records = append(records, record)
 			}
 		}
