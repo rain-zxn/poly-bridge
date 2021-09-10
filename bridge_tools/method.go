@@ -297,7 +297,7 @@ func everyBodyNft(config *conf.Config) {
 			break
 		}
 		var tt int64
-		err = db.Raw("select time from src_transfers where `from`= ? and chain_id= ? order by time limit 1", user.Address, user.FirstChain).
+		err = db.Raw("select b.time from src_transfers a left join src_transactions b on a.tx_hash = b.hash where a.`from`= ? and a.chain_id= ? order by b.time limit 1", user.Address, user.FirstChain).
 			First(&tt).Error
 		if err != nil {
 			logs.Error("First(&tt).Error", err)
