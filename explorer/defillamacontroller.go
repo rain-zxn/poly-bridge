@@ -316,3 +316,12 @@ func (c *DefiLlamaController) GetTVLClover() {
 	c.Data["json"] = tvlAmount
 	c.ServeJSON()
 }
+
+func (c *DefiLlamaController) GetTVLRipple() {
+	tvlAmount, err := getTVLAmount(basedef.RIPPLE_CROSSCHAIN_ID)
+	if err != nil {
+		logs.Error("GetTVLRipple err", err)
+	}
+	c.Data["json"] = tvlAmount
+	c.ServeJSON()
+}

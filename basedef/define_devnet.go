@@ -49,6 +49,7 @@ const (
 	ZKSYNC_CROSSCHAIN_ID     = uint64(940)
 	CELO_CROSSCHAIN_ID       = uint64(960)
 	CLOVER_CROSSCHAIN_ID     = uint64(970)
+	RIPPLE_CROSSCHAIN_ID     = uint64(223)
 
 	ENV = "devnet"
 )
