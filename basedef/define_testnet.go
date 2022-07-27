@@ -55,7 +55,9 @@ const (
 	CELO_CROSSCHAIN_ID       = uint64(960)
 	CLOVER_CROSSCHAIN_ID     = uint64(970)
 	GOERLI_CROSSCHAIN_ID     = uint64(1000002)
-	ENV                      = "testnet"
+	NEO3N3T5_CROSSCHAIN_ID   = uint64(888)
+
+	ENV = "testnet"
 )
 
 const (

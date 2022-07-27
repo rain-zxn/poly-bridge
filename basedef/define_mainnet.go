@@ -55,6 +55,7 @@ const (
 	ZKSYNC_CROSSCHAIN_ID     = uint64(100940)
 	CELO_CROSSCHAIN_ID       = uint64(36)
 	CLOVER_CROSSCHAIN_ID     = uint64(37)
+	NEO3N3T5_CROSSCHAIN_ID   = uint64(1000888)
 
 	ENV = "mainnet"
 )
