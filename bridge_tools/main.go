@@ -22,6 +22,7 @@ import (
 	"github.com/urfave/cli"
 	"os"
 	"poly-bridge/bridge_tools/conf"
+	"poly-bridge/bridge_tools/zionmerge"
 	"poly-bridge/cacheRedis"
 	serverconf "poly-bridge/conf"
 	"runtime"
@@ -171,7 +172,7 @@ func startServer(ctx *cli.Context) {
 	case 7:
 		configServerFile := ctx.GlobalString(getFlagName(configServerPathFlag))
 		serverConfig := serverconf.NewConfig(configServerFile)
-		zionSetUp(serverConfig)
+		zionmerge.ZionSetUp(serverConfig)
 	case 8:
 		configServerFile := ctx.GlobalString(getFlagName(configServerPathFlag))
 		serverConfig := serverconf.NewConfig(configServerFile)
