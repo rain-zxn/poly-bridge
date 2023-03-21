@@ -379,3 +379,12 @@ func (c *DefiLlamaController) GetTVLCloudTx() {
 	c.Data["json"] = tvlAmount
 	c.ServeJSON()
 }
+
+func (c *DefiLlamaController) GetTVLPolygonZK() {
+	tvlAmount, err := getTVLAmount(basedef.POLYGONZK_CROSSCHAIN_ID)
+	if err != nil {
+		logs.Error("GetTVLPolygonZK err", err)
+	}
+	c.Data["json"] = tvlAmount
+	c.ServeJSON()
+}

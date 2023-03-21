@@ -34,10 +34,12 @@ require (
 	github.com/urfave/cli v1.22.4
 	gorm.io/driver/mysql v1.0.3
 	gorm.io/gorm v1.20.8
+	github.com/polynetwork/polygonZK-sdk v0.0.0
 )
 
 replace (
 	github.com/cosmos/cosmos-sdk => github.com/Switcheo/cosmos-sdk v0.39.2-0.20200814061308-474a0dbbe4ba
 	github.com/joeqian10/neo-gogogo => github.com/blockchain-develop/neo-gogogo v0.0.0-20210126025041-8d21ec4f0324
 	github.com/rubblelabs/ripple v0.0.0-20220222071018-38c1a8b14c18 => github.com/siovanus/ripple v0.0.0-20220406100637-81f6afe283d9
+	github.com/polynetwork/polygonZK-sdk v0.0.0 => github.com/rain-zxn/polygonZK-sdk v0.0.0-20230321073053-d5261d77814f
 )

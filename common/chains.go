@@ -51,6 +51,7 @@ var (
 	aptosSdk      *chainsdk.AptosSdkPro
 	dexitSdk      *chainsdk.EthereumSdkPro
 	cloudtxSdk    *chainsdk.EthereumSdkPro
+	polygonZkSdk  *chainsdk.EthereumSdkPro
 	config        *conf.Config
 )
 
@@ -405,6 +406,15 @@ func newChainSdks(config *conf.Config) {
 		urls := chainConfig.GetNodesUrl()
 		cloudtxSdk = chainsdk.NewEthereumSdkPro(urls, chainConfig.ListenSlot, chainConfig.ChainId)
 		sdkMap[basedef.CLOUDTX_CROSSCHAIN_ID] = cloudtxSdk
+	}
+	{
+		chainConfig := config.GetChainListenConfig(basedef.POLYGONZK_CROSSCHAIN_ID)
+		if chainConfig == nil {
+			panic("polygonzk chain is invalid")
+		}
+		urls := chainConfig.GetNodesUrl()
+		polygonZkSdk = chainsdk.NewEthereumSdkPro(urls, chainConfig.ListenSlot, chainConfig.ChainId)
+		sdkMap[basedef.POLYGONZK_CROSSCHAIN_ID] = polygonZkSdk
 	}
 }
 
@@ -907,6 +917,20 @@ func GetBalance(chainId uint64, hash string) (*big.Int, error) {
 			errMap[err] = true
 		}
 	}
+	if chainId == basedef.POLYGONZK_CROSSCHAIN_ID {
+		chainConfig := config.GetChainListenConfig(basedef.POLYGONZK_CROSSCHAIN_ID)
+		if chainConfig == nil {
+			panic("polygonzk chain is invalid")
+		}
+		for _, v := range chainConfig.ProxyContract {
+			if len(strings.TrimSpace(v)) == 0 {
+				continue
+			}
+			balance, err := polygonZkSdk.Erc20Balance(hash, v)
+			maxFun(balance)
+			errMap[err] = true
+		}
+	}
 	if maxBalance.Cmp(big.NewInt(0)) > 0 {
 		return maxBalance, nil
 	}
@@ -1136,6 +1160,13 @@ func GetTotalSupply(chainId uint64, hash string) (*big.Int, error) {
 		}
 		return cloudtxSdk.Erc20TotalSupply(hash)
 	}
+	if chainId == basedef.POLYGONZK_CROSSCHAIN_ID {
+		chainConfig := config.GetChainListenConfig(basedef.POLYGONZK_CROSSCHAIN_ID)
+		if chainConfig == nil {
+			panic("polygonzk chain GetTotalSupply invalid")
+		}
+		return polygonZkSdk.Erc20TotalSupply(hash)
+	}
 	return new(big.Int).SetUint64(0), nil
 }
 
@@ -1217,6 +1248,8 @@ func GetProxyBalance(chainId uint64, hash string, proxy string) (*big.Int, error
 		return dexitSdk.Erc20Balance(hash, proxy)
 	case basedef.CLOUDTX_CROSSCHAIN_ID:
 		return cloudtxSdk.Erc20Balance(hash, proxy)
+	case basedef.POLYGONZK_CROSSCHAIN_ID:
+		return polygonZkSdk.Erc20Balance(hash, proxy)
 	default:
 		return new(big.Int).SetUint64(0), nil
 	}

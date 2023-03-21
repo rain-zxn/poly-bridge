@@ -37,7 +37,7 @@ func SyncEthGenesisHeader2Poly(
 	validators []*polysdk.Account,
 ) (err error) {
 
-	curr, err := sideChainSdk.GetCurrentBlockHeight()
+	curr, err := sideChainSdk.GetCurrentBlockHeight(sideChainID)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func SyncBscGenesisHeader2Poly(
 	validators []*polysdk.Account,
 ) error {
 
-	height, err := sideChainSdk.GetCurrentBlockHeight()
+	height, err := sideChainSdk.GetCurrentBlockHeight(sideChainID)
 	if err != nil {
 		return err
 	}
@@ -123,7 +123,7 @@ func SyncHecoGenesisHeader2Poly(
 	validators []*polysdk.Account,
 ) error {
 
-	height, err := sideChainSdk.GetCurrentBlockHeight()
+	height, err := sideChainSdk.GetCurrentBlockHeight(sideChainID)
 	if err != nil {
 		return err
 	}

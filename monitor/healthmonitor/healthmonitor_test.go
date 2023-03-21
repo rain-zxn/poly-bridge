@@ -62,7 +62,7 @@ func EthNodeMonitor(config *conf.Config) {
 					logs.Info("node: %s,NewEthereumSdk error: %s", node.Url, err)
 					continue
 				}
-				height, err := sdk.GetCurrentBlockHeight()
+				height, err := sdk.GetCurrentBlockHeight(chainId)
 				if err != nil || height == 0 || height == math.MaxUint64 {
 					logs.Error("node: %s, get current block height err: %s, ", sdk.GetUrl(), err)
 					continue

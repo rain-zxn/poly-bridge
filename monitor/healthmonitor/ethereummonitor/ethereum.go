@@ -67,7 +67,7 @@ func (e *EthereumHealthMonitor) RelayerBalanceMonitor() ([]*basedef.RelayerAccou
 		return false
 	}
 	for _, s := range e.sdks {
-		height, _ := s.GetCurrentBlockHeight()
+		height, _ := s.GetCurrentBlockHeight(e.GetChainId())
 		if isMaxHeight(height) {
 			sdk = s
 		}
@@ -150,7 +150,7 @@ func (e *EthereumHealthMonitor) NodeMonitor() ([]basedef.NodeStatus, error) {
 }
 
 func (e *EthereumHealthMonitor) GetCurrentHeight(sdk *chainsdk.EthereumSdk, chainName string) (uint64, error) {
-	height, err := sdk.GetCurrentBlockHeight()
+	height, err := sdk.GetCurrentBlockHeight(e.GetChainId())
 	if err != nil || height == 0 || height == math.MaxUint64 {
 		logs.Info("%s height=%d", chainName, height)
 		err2 := fmt.Errorf("get current block height err: %s", err)

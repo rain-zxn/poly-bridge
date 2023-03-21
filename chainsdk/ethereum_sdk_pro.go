@@ -93,7 +93,7 @@ func (pro *EthereumSdkPro) nodeSelection() {
 
 func (pro *EthereumSdkPro) selection() {
 	for url, info := range pro.infos {
-		height, err := info.sdk.GetCurrentBlockHeight()
+		height, err := info.sdk.GetCurrentBlockHeight(pro.id)
 		if err != nil || height == math.MaxUint64 || height == 0 {
 			logs.Error("nodeselection get current block height err, chain %v, url: %s", pro.id, url)
 			height = 1

@@ -27,6 +27,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
+	polygonZk "github.com/polynetwork/polygonZK-sdk/client"
 	"poly-bridge/basedef"
 
 	//"github.com/polynetwork/eth-contracts/go_abi/erc20_abi"
@@ -60,13 +61,18 @@ func (s *EthereumSdk) GetUrl() string {
 	return s.url
 }
 
-func (s *EthereumSdk) GetCurrentBlockHeight() (uint64, error) {
-	var result hexutil.Big
-	err := s.rpcClient.CallContext(context.Background(), &result, "eth_blockNumber")
-	for err != nil {
-		return 0, err
+func (s *EthereumSdk) GetCurrentBlockHeight(chainId uint64) (uint64, error) {
+	switch chainId {
+	case basedef.POLYGONZK_CROSSCHAIN_ID:
+		return (&polygonZk.Client{s.rpcClient}).ConsolidatedBlockNumber()
+	default:
+		var result hexutil.Big
+		err := s.rpcClient.CallContext(context.Background(), &result, "eth_blockNumber")
+		for err != nil {
+			return 0, err
+		}
+		return (*big.Int)(&result).Uint64(), err
 	}
-	return (*big.Int)(&result).Uint64(), err
 }
 
 func toBlockNumArg(number *big.Int) string {

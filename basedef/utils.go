@@ -263,7 +263,11 @@ func Address2Hash(chainId uint64, value string) (string, error) {
 	} else if chainId == CLOUDTX_CROSSCHAIN_ID {
 		addr := common.HexToAddress(value)
 		return strings.ToLower(addr.String()[2:]), nil
+	} else if chainId == POLYGONZK_CROSSCHAIN_ID {
+		addr := common.HexToAddress(value)
+		return strings.ToLower(addr.String()[2:]), nil
 	}
+
 	return value, nil
 }
 
@@ -359,6 +363,9 @@ func GetChainName(id uint64) string {
 		return "Dexit"
 	case CLOUDTX_CROSSCHAIN_ID:
 		return "CloudTx"
+	case POLYGONZK_CROSSCHAIN_ID:
+		return "PolygonZk"
+
 
 	default:
 		return fmt.Sprintf("Unknown(%d)", id)
