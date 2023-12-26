@@ -18,6 +18,7 @@
 package bridgedao
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/beego/beego/v2/core/logs"
@@ -631,9 +632,13 @@ func (dao *BridgeDao) WrapperTransactionCheckFee(wrapperTransactions []*models.W
 	if len(wrapperTransactions) == 0 {
 		return nil
 	}
+	jsonwrapperTransactions, _ := json.MarshalIndent(wrapperTransactions, "", "	")
+	fmt.Println("jsonwrapperTransactions", string(jsonwrapperTransactions))
 	//get chain fee
 	chainFees := make([]*models.ChainFee, 0)
 	dao.db.Preload("TokenBasic").Find(&chainFees)
+	jsonchainFees, _ := json.MarshalIndent(chainFees, "", "	")
+	fmt.Println("jsonchainFees", string(jsonchainFees))
 	chain2Fees := make(map[uint64]*models.ChainFee, 0)
 	for _, chainFee := range chainFees {
 		chain2Fees[chainFee.ChainId] = chainFee
@@ -663,6 +668,8 @@ func (dao *BridgeDao) WrapperTransactionCheckFee(wrapperTransactions []*models.W
 			logs.Error("find no feeToken for hash %s on chain %v", v.FeeTokenHash, v.SrcChainId)
 			continue
 		}
+		jsontoken, _ := json.MarshalIndent(token, "", "	")
+		fmt.Println("jsontoken", string(jsontoken))
 
 		chainFee, ok := chain2Fees[v.DstChainId]
 		if !ok {
@@ -672,6 +679,7 @@ func (dao *BridgeDao) WrapperTransactionCheckFee(wrapperTransactions []*models.W
 		}
 		//money paid in wrapper
 		feePay, feeMin, gasPay := fee.CheckFeeCal(chainFee, token, v.FeeAmount)
+		fmt.Println("feePay", feePay, "feeMin", feeMin, "gasPay", gasPay)
 		// get optimistic L1 fee on ethereum
 		if chainFee.ChainId == basedef.OPTIMISTIC_CROSSCHAIN_ID {
 			ethChainFee, ok := chain2Fees[basedef.ETHEREUM_CROSSCHAIN_ID]
@@ -697,13 +705,19 @@ func (dao *BridgeDao) WrapperTransactionCheckFee(wrapperTransactions []*models.W
 				continue
 			}
 			if minFee, in := conf.EstimateFeeMin[v.DstChainId]; in {
+				fmt.Println("minFee", minFee)
 				if minFee > 0 && minFee < 100 {
 					gasPay = new(big.Float).Mul(gasPay, new(big.Float).SetInt64(100))
+					fmt.Println("gasPay", gasPay)
 					gasPay = new(big.Float).Quo(gasPay, new(big.Float).SetInt64(minFee))
+					fmt.Println("gasPay", gasPay)
 				}
 			}
-			PaidGasFloat64, _ = gasPay.Float64()
+			fmt.Println("gasPay", gasPay)
+			PaidGasFloat64, err1 := gasPay.Float64()
+			fmt.Println("PaidGasFloat64", PaidGasFloat64, "err1", err1)
 			PaidGas := decimal.NewFromFloat(PaidGasFloat64).Mul(decimal.NewFromInt(100))
+			fmt.Println("PaidGas", PaidGas)
 			v.PaidGas = models.NewBigInt(PaidGas.BigInt())
 			logs.Info("check fee wrapper_hash %s is EstimateProxy,PaidGas %v", v.Hash, v.PaidGas)
 			continue
