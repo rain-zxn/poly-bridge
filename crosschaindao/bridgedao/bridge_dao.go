@@ -714,8 +714,9 @@ func (dao *BridgeDao) WrapperTransactionCheckFee(wrapperTransactions []*models.W
 				}
 			}
 			fmt.Println("gasPay", gasPay)
-			PaidGasFloat64, err1 := gasPay.Float64()
-			fmt.Println("PaidGasFloat64", PaidGasFloat64, "err1", err1)
+			fmt.Println("PaidGasFloat64", PaidGasFloat64)
+			PaidGasFloat64, accuracy := gasPay.Float64()
+			fmt.Println("PaidGasFloat64", PaidGasFloat64, "accuracy", accuracy)
 			PaidGas := decimal.NewFromFloat(PaidGasFloat64).Mul(decimal.NewFromInt(100))
 			fmt.Println("PaidGas", PaidGas)
 			v.PaidGas = models.NewBigInt(PaidGas.BigInt())
