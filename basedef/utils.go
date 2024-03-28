@@ -442,6 +442,8 @@ func GetChainName(id uint64) string {
 		return "Cronos"
 	case OKB_CROSSCHAIN_ID:
 		return "OKB Chain"
+	case BFC_CROSSCHAIN_ID:
+		return "Benfen"
 
 	default:
 		return fmt.Sprintf("Unknown(%d)", id)
@@ -450,7 +452,7 @@ func GetChainName(id uint64) string {
 
 func FormatAddr(chain uint64, addr string) string {
 	switch chain {
-	case ONT_CROSSCHAIN_ID, SWITCHEO_CROSSCHAIN_ID, ZILLIQA_CROSSCHAIN_ID, NEO_CROSSCHAIN_ID, NEO3_CROSSCHAIN_ID, RIPPLE_CROSSCHAIN_ID:
+	case ONT_CROSSCHAIN_ID, SWITCHEO_CROSSCHAIN_ID, ZILLIQA_CROSSCHAIN_ID, NEO_CROSSCHAIN_ID, NEO3_CROSSCHAIN_ID, RIPPLE_CROSSCHAIN_ID, BFC_CROSSCHAIN_ID:
 		return addr
 	case STARCOIN_CROSSCHAIN_ID, APTOS_CROSSCHAIN_ID:
 		if Has0xPrefix(addr) {
@@ -464,7 +466,7 @@ func FormatAddr(chain uint64, addr string) string {
 
 func FormatTxHash(chain uint64, hash string) string {
 	switch chain {
-	case ONT_CROSSCHAIN_ID, RIPPLE_CROSSCHAIN_ID:
+	case ONT_CROSSCHAIN_ID, RIPPLE_CROSSCHAIN_ID, BFC_CROSSCHAIN_ID:
 		return hash
 	case SWITCHEO_CROSSCHAIN_ID:
 		return strings.ToUpper(hash)

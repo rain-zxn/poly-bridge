@@ -925,3 +925,10 @@ func (dao *BridgeDao) SaveTokenPriceAvgs(tokenPrice []*models.TokenPriceAvg) (er
 		Error
 	return
 }
+
+func (dao *BridgeDao) GetLatestTx(chainId uint64) (string, string) {
+	var srcTxHash, dstTxHash string
+	dao.db.Model(&models.SrcTransaction{}).Where("chain_id = ?", chainId).Order("height desc").Limit(1).Select("hash").Find(&srcTxHash)
+	dao.db.Model(&models.DstTransaction{}).Where("chain_id = ?", chainId).Order("height desc").Limit(1).Select("hash").Find(&dstTxHash)
+	return srcTxHash, dstTxHash
+}

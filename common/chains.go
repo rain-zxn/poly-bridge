@@ -63,6 +63,7 @@ var (
 	goshenSdk      *chainsdk.EthereumSdkPro
 	cronosSdk      *chainsdk.EthereumSdkPro
 	okbSdk		   *chainsdk.EthereumSdkPro
+	bfcSdk         *chainsdk.BfcSdkPro
 	config         *conf.Config
 	sdkMap         map[uint64]interface{}
 	BSC_GetBalance int
@@ -531,6 +532,15 @@ func newChainSdks(config *conf.Config) {
 		urls := chainConfig.GetNodesUrl()
 		okbSdk = chainsdk.NewEthereumSdkPro(urls, chainConfig.ListenSlot, chainConfig.ChainId)
 		sdkMap[basedef.OKB_CROSSCHAIN_ID] = okbSdk
+	}
+	{
+		chainConfig := config.GetChainListenConfig(basedef.BFC_CROSSCHAIN_ID)
+		if chainConfig == nil {
+			panic("bfc chain is invalid")
+		}
+		urls := chainConfig.GetNodesUrl()
+		bfcSdk = chainsdk.NewBfcSdkPro(urls, chainConfig.ListenSlot, chainConfig.ChainId)
+		sdkMap[basedef.BFC_CROSSCHAIN_ID] = bfcSdk
 	}
 }
 

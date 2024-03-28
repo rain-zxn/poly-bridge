@@ -73,6 +73,7 @@ const (
 	GOSHEN_CROSSCHAIN_ID      = uint64(1001070)
 	CRONOS_CROSSCHAIN_ID      = uint64(48)
 	OKB_CROSSCHAIN_ID		  = uint64(1001090)
+	BFC_CROSSCHAIN_ID         = uint64(1001200)
 
 	ENV = "mainnet"
 )

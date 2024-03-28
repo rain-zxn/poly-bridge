@@ -74,6 +74,7 @@ const (
 	GOSHEN_CROSSCHAIN_ID      = uint64(1070)
 	CRONOS_CROSSCHAIN_ID      = uint64(1080)
 	OKB_CROSSCHAIN_ID		  = uint64(1090)
+	BFC_CROSSCHAIN_ID         = uint64(1200)
 
 	ENV = "testnet"
 )
