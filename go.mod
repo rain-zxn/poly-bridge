@@ -1,6 +1,6 @@
 module poly-bridge
 
-go 1.14
+go 1.20
 
 require (
 	github.com/block-vision/sui-go-sdk v1.0.5
